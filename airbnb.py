@@ -21,12 +21,23 @@ def task2(listings):
 
     print
     print "********************* Task 2d *********************"
+    #Find the higest monthly price, this is not working as it should
+    highestMontlyPrice = listings.map(lambda row: row[59].split()).reduce(lambda a, b: a if (a > b) else b)
+    print "Highest montly price:", highestMontlyPrice
+
+    #Count country
+    country = listings.map(lambda row: row[17]).distinct()
+    print "Country count: ", country.count()
+
+    for country in country.collect():
+        print country
 
 if __name__ == "__main__":
     sc = SparkContext(appName="AirBnb")
     sc.setLogLevel("WARN")
-
     listings_textfile = sc.textFile("listings_us.csv")
+    header = listings_textfile.first() #extract header
+    listings_textfile  = listings_textfile.filter(lambda row: row != header) #ignores the header
     listings = listings_textfile.map(lambda x: tuple(x.split('\t')))
     listings_sample = listings.sample(False, 0.1, 7)
     # Lagre sample:
