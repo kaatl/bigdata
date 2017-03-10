@@ -4,6 +4,8 @@ from pyspark.sql import Row, SQLContext
 from pyspark.sql.types import DoubleType
 from pyspark.sql.functions import col, lower
 
+
+
 def task2a(listings):
     print
     print "********************* Task 2b *********************"
@@ -40,14 +42,19 @@ def task2(listings):
     countries.show(countriesLength, truncate = False)
 
 
-    prices = listings.select(col("price")).distinct().dropna(None) #Drop values that are "None"
+    monthly_prices = listings.select(col("monthly_prices")).distinct().dropna(None) #Drop values that are "None"
 
     #Show max price per month
-    print "Highest monthly price ", max(prices.collect())
+    print "Highest monthly price ", max(monthly_prices.collect())
 
     #Show min price per month
-    print "Lowest monthly price ", min(prices.collect())
+    print "Lowest monthly price ", min(monthly_prices.collect())
 
+    #Show the monthly price sorted min to max
+    print "Sorted monthly price ", sorted(monthly_prices.collect())
+
+def task3(listings):
+    print('hei')
 
 
 if __name__ == "__main__":
@@ -65,20 +72,22 @@ if __name__ == "__main__":
 
 
     # Lagre sample:
-    listings.coalesce(1).saveAsTextFile("sampleFiles.csv")
+    #listings.coalesce(1).saveAsTextFile("sampleFiles.csv")
 
     listings_df = listings.map(
         lambda c: Row(
             cities = c[15],
             countries = c[17],
-            price = c[59].replace(',','').replace('$','')
+            monthly_prices = c[59].replace(',','').replace('$',''),
+            price = c[65].replace(',','').replace('$','')
         ))
 
     listings_df = sqlContext.createDataFrame(listings_df)
-    listings_df = listings_df.withColumn('price', listings_df['price'].cast(DoubleType()))
+    listings_df = listings_df.withColumn('monthly_prices', listings_df['monthly_prices'].cast(DoubleType()))
 
 
     #task2a(listings)
     task2(listings_df)
+    task3(listings_df)
 
     sc.stop()
