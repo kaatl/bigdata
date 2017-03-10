@@ -53,8 +53,15 @@ def task2(listings):
     #Show the monthly price sorted min to max
     print "Sorted monthly price ", sorted(monthly_prices.collect())
 
+    #Shows average monthly price
+    listings.agg({"monthly_prices":"avg"}).show()
+
 def task3(listings):
-    print('hei')
+    print
+    print '********************* Task 3a *********************'
+    print "For each city, the average booking price per night is: "
+    cityAvgPrice = listings.groupBy("cities").agg({"price":"avg"})
+    cityAvgPrice.show(cityAvgPrice.count(), truncate = False)
 
 
 if __name__ == "__main__":
@@ -85,9 +92,8 @@ if __name__ == "__main__":
     listings_df = sqlContext.createDataFrame(listings_df)
     listings_df = listings_df.withColumn('monthly_prices', listings_df['monthly_prices'].cast(DoubleType()))
 
-
     #task2a(listings)
-    task2(listings_df)
+    #task2(listings_df)
     task3(listings_df)
 
     sc.stop()
