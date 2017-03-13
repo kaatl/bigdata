@@ -97,6 +97,17 @@ def task4(listings):
     listingPerHost = listings.groupBy("hostID").agg({"listingID":"count"}).orderBy("hostID")
     listingPerHost.show(listingPerHost.count(), truncate = False)
 
+    hostsWithOverOneListing = listings.groupBy("hostID").count().where("count(listingID) > 1").orderBy("hostID")
+    #hostsWithOverOneListing.show(hostsWithOverOneListing.count(), truncate = False)
+
+    totalListingPerHost = listingPerHost.count()
+    totalListingMoreThanOne = hostsWithOverOneListing.count()
+
+
+    print "********************* Task 4b *********************"
+    print "Percentage of hosts with more than 1 listings are: ",  float(totalListingMoreThanOne) / float(totalListingPerHost) * 100.0, " %"
+
+
 
 if __name__ == "__main__":
     sc = SparkContext(appName="AirBnb")
