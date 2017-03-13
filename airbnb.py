@@ -71,9 +71,24 @@ def task3(listings):
     roomType = listings.groupBy("roomType","cities").agg({"price":"avg"}).orderBy("cities")
     roomType.show(roomType.count(), truncate = False)
 
+    print
     print "********************* Task 3c *********************"
     reviewsMonthAvg = listings.groupBy("cities").agg({"reviewsPerMonth":"avg"}).orderBy("cities")
     reviewsMonthAvg.show(reviewsMonthAvg.count(), truncate = False)
+
+    print
+    print "********************* Task 3d *********************"
+    print "Estimated number of nights booked per year"
+    #Use number of reviews per month field in listings and assume that
+    #only 70% of customers leave a review and on average they spend 3
+    #nights per booking.
+
+    listings = listings.withColumn("reviewsPerMonth", listings["reviewsPerMonth"]*3 + (listings["reviewsPerMonth"]*3 / 70) * 30)
+    reviewsMonthTotal = listings.groupBy("cities").agg({"reviewsPerMonth":"sum"}).orderBy("cities")
+    reviewsMonthTotal.show(reviewsMonthTotal.count(), truncate = False)
+
+    print
+
 
 
 if __name__ == "__main__":
