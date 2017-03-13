@@ -63,6 +63,12 @@ def task3(listings):
     cityAvgPrice = listings.groupBy("cities").agg({"price":"avg"})
     cityAvgPrice.show(cityAvgPrice.count(), truncate = False)
 
+    print
+    print '********************* Task 3b *********************'
+    print "Average booking price per room type per night: "
+    roomType = listings.groupBy("roomType","cities").agg({"price":"avg"})
+    roomType.show(roomType.count(), truncate = False)
+
 
 if __name__ == "__main__":
     sc = SparkContext(appName="AirBnb")
@@ -83,10 +89,11 @@ if __name__ == "__main__":
 
     listings_df = listings.map(
         lambda c: Row(
-            cities = c[15],
-            countries = c[17],
+            cities = c[15].lower().strip(),
+            countries = c[17].lower().strip(),
             monthly_prices = c[59].replace(',','').replace('$',''),
-            price = c[65].replace(',','').replace('$','')
+            price = c[65].replace(',','').replace('$',''),
+            roomType = c[81]
         ))
 
     listings_df = sqlContext.createDataFrame(listings_df)
