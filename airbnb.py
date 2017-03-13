@@ -45,10 +45,12 @@ def task2(listings):
     monthly_prices = listings.select(col("monthly_prices")).distinct().dropna(None) #Drop values that are "None"
 
     #Show max price per month
-    print "Highest monthly price ", max(monthly_prices.collect())
+    print "Highest monthly price "
+    listings.agg({"monthly_prices":"max"}).show()
 
     #Show min price per month
-    print "Lowest monthly price ", min(monthly_prices.collect())
+    print "Lowest monthly price "
+    listings.agg({"monthly_prices":"min"}).show()
 
     #Show the monthly price sorted min to max
     print "Sorted monthly price ", sorted(monthly_prices.collect())
@@ -60,14 +62,18 @@ def task3(listings):
     print
     print '********************* Task 3a *********************'
     print "For each city, the average booking price per night is: "
-    cityAvgPrice = listings.groupBy("cities").agg({"price":"avg"})
+    cityAvgPrice = listings.groupBy("cities").agg({"price":"avg"}).orderBy("cities")
     cityAvgPrice.show(cityAvgPrice.count(), truncate = False)
 
     print
     print '********************* Task 3b *********************'
     print "Average booking price per room type per night: "
-    roomType = listings.groupBy("roomType","cities").agg({"price":"avg"})
+    roomType = listings.groupBy("roomType","cities").agg({"price":"avg"}).orderBy("cities")
     roomType.show(roomType.count(), truncate = False)
+
+    print "********************* Task 3c *********************"
+    reviewsMonthAvg = listings.groupBy("cities").agg({"reviewsPerMonth":"avg"}).orderBy("cities")
+    reviewsMonthAvg.show(reviewsMonthAvg.count(), truncate = False)
 
 
 if __name__ == "__main__":
@@ -77,7 +83,10 @@ if __name__ == "__main__":
     sc.setLogLevel("WARN")
     listings_textfile = sc.textFile("listings_us.csv")
     header = listings_textfile.first() #extract header
-    #print "HEADER: ", header
+    print
+    header = header.split()
+    #for x in range(len(header)):
+        #print x, " - ", header[x]
 
     listings_textfile = listings_textfile.filter(lambda row: row != header) #ignores the header
     listings = listings_textfile.map(lambda x: tuple(x.split('\t')))
@@ -93,6 +102,7 @@ if __name__ == "__main__":
             countries = c[17].lower().strip(),
             monthly_prices = c[59].replace(',','').replace('$',''),
             price = c[65].replace(',','').replace('$',''),
+            reviewsPerMonth = c[80],
             roomType = c[81]
         ))
 
