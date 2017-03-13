@@ -88,7 +88,14 @@ def task3(listings):
     reviewsMonthTotal.show(reviewsMonthTotal.count(), truncate = False)
 
     print
+    print "********************* Task 3e *********************"
 
+def task4(listings):
+    print
+    print "********************* Task 4a *********************"
+    print "Print global average number of listing per host: "
+    listingPerHost = listings.groupBy("hostID").agg({"listingID":"count"}).orderBy("hostID")
+    listingPerHost.show(listingPerHost.count(), truncate = False)
 
 
 if __name__ == "__main__":
@@ -118,14 +125,23 @@ if __name__ == "__main__":
             monthly_prices = c[59].replace(',','').replace('$',''),
             price = c[65].replace(',','').replace('$',''),
             reviewsPerMonth = c[80],
-            roomType = c[81]
+            roomType = c[81],
+            accomodation = c[1]
+        ))
+
+    listings_dftask4 = listings.map(
+        lambda c: Row(
+            hostID = c[28],
+            listingID = [43]
         ))
 
     listings_df = sqlContext.createDataFrame(listings_df)
+    listings_dftask4 = sqlContext.createDataFrame(listings_dftask4)
     listings_df = listings_df.withColumn('monthly_prices', listings_df['monthly_prices'].cast(DoubleType()))
 
     #task2a(listings)
     #task2(listings_df)
-    task3(listings_df)
+    #task3(listings_df)
+    task4(listings_dftask4)
 
     sc.stop()
