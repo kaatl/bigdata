@@ -5,15 +5,14 @@ from pyspark.sql.types import DoubleType
 from pyspark.sql.functions import col, lower
 
 
-
-def task2a(listings):
+def task2b(listings, header):
     print
     print "********************* Task 2b *********************"
     print "Number of distinct values in each columns:"
 
     # Printer antall distinct values for hver kolonne, er driiiiiiiittregt
-    for i in range(listings.count()):
-        print listings.map(lambda row: row[i]).distinct().count()
+    for i in range(len(header)):
+        print i, " ", header[i], " - ", listings.map(lambda row: row[i]).distinct().count()
 
 def task2(listings):
 
@@ -150,9 +149,9 @@ if __name__ == "__main__":
     listings_dftask4 = sqlContext.createDataFrame(listings_dftask4)
     listings_df = listings_df.withColumn('monthly_prices', listings_df['monthly_prices'].cast(DoubleType()))
 
-    #task2a(listings)
+    #task2b(listings, header)
     #task2(listings_df)
     #task3(listings_df)
-    task4(listings_dftask4)
+    #task4(listings_dftask4)
 
     sc.stop()
