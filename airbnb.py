@@ -52,7 +52,7 @@ def task2(listings):
     listings.agg({"monthly_prices":"min"}).show()
 
     #Show the monthly price sorted min to max
-    print "Sorted monthly price ", sorted(monthly_prices.collect())
+    #print "Sorted monthly price ", sorted(monthly_prices.collect())
 
     #Shows average monthly price
     listings.agg({"monthly_prices":"avg"}).show()
@@ -114,6 +114,8 @@ if __name__ == "__main__":
 
     sc.setLogLevel("WARN")
     listings_textfile = sc.textFile("listings_us.csv")
+    calendar_textfile = sc.textFile("calendar_us.csv")
+
     header = listings_textfile.first() #extract header
     print
     header = header.split()
@@ -121,17 +123,26 @@ if __name__ == "__main__":
         #print x, " - ", header[x]
 
     listings_textfile = listings_textfile.filter(lambda row: row != header) #ignores the header
+    calendar_textfile = calendar_textfile.filter(lambda row: row != header) #ignores the header
+
     listings = listings_textfile.map(lambda x: tuple(x.split('\t')))
+    calendar = calendar_textfile.map(lambda x: tuple(x.split('\t')))
+
     listings = listings.sample(False, 0.1, 7) # Sample
+    calendar = calendar.sample(False, 0.1, 7) # Sample
 
 
     # Lagre sample:
     #listings.coalesce(1).saveAsTextFile("sampleFiles.csv")
+    #calendar.coalesce(1).saveAsTextFile("calendar_sampleFiles.csv")
+
 
     listings_df = listings.map(
         lambda c: Row(
             cities = c[15].lower().strip(),
             countries = c[17].lower().strip(),
+            hostID = c[28],
+            listingID = [43],
             monthly_prices = c[59].replace(',','').replace('$',''),
             price = c[65].replace(',','').replace('$',''),
             reviewsPerMonth = c[80],
@@ -139,19 +150,26 @@ if __name__ == "__main__":
             accomodation = c[1]
         ))
 
-    listings_dftask4 = listings.map(
+
+
+    calendar_df = calendar.map(
         lambda c: Row(
-            hostID = c[28],
-            listingID = [43]
+            listingID = c[0],
+            date = c[1],
+            available = c[2]
         ))
 
+
     listings_df = sqlContext.createDataFrame(listings_df)
-    listings_dftask4 = sqlContext.createDataFrame(listings_dftask4)
+    calendar_df = sqlContext.createDataFrame(calendar_df)
+
     listings_df = listings_df.withColumn('monthly_prices', listings_df['monthly_prices'].cast(DoubleType()))
 
+
+
     #task2b(listings, header)
-    #task2(listings_df)
+    task2(listings_df)
     #task3(listings_df)
-    #task4(listings_dftask4)
+    #task4(listings_df)
 
     sc.stop()
