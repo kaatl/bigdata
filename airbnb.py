@@ -77,17 +77,28 @@ def task3(listings):
 
     print
     print "********************* Task 3d *********************"
-    print "Estimated number of nights booked per year"
+    print "Estimated number of nights booked per year: "
     #Use number of reviews per month field in listings and assume that
     #only 70% of customers leave a review and on average they spend 3
     #nights per booking.
 
-    listings = listings.withColumn("reviewsPerMonth", listings["reviewsPerMonth"]*3 + (listings["reviewsPerMonth"]*3 / 70) * 30)
-    reviewsMonthTotal = listings.groupBy("cities").agg({"reviewsPerMonth":"sum"}).orderBy("cities")
-    reviewsMonthTotal.show(reviewsMonthTotal.count(), truncate = False)
+    #Number of nigths booked per year per city
+    NumberOfNightsBooked = listings.withColumn("reviewsPerMonth", listings["reviewsPerMonth"]/0.7*3*12)
+    NumberOfNights = NumberOfNightsBooked.groupBy("cities").agg({"reviewsPerMonth":"sum"}).orderBy("cities")
+    NumberOfNights.show(NumberOfNights.count(), truncate = False)
+
+    #listings = listings.withColumn("reviewsPerMonth", listings["reviewsPerMonth"]*3 + (listings["reviewsPerMonth"]*3 / 70) * 30)
+    #reviewsMonthTotal = listings.groupBy("cities").agg({"reviewsPerMonth":"sum"}).orderBy("cities")
+    #reviewsMonthTotal.show(reviewsMonthTotal.count(), truncate = False)
 
     print
     print "********************* Task 3e *********************"
+    print "Estimated amount of money spent on AirBnB accomodation per year: "
+    #Number of nigths booked per year per city
+    NumberOfNightsBooked = listings.withColumn("reviewsPerMonth", listings["reviewsPerMonth"]/0.7*3*12 + (listings["price"]*12))
+    AmountOfMoney = NumberOfNightsBooked.groupBy("cities").agg({"reviewsPerMonth":"sum"}).orderBy("cities")
+    AmountOfMoney.show(AmountOfMoney.count(), truncate = False)
+
 
 def task4(listings):
     print
@@ -168,8 +179,8 @@ if __name__ == "__main__":
 
 
     #task2b(listings, header)
-    task2(listings_df)
-    #task3(listings_df)
+    #task2(listings_df)
+    task3(listings_df)
     #task4(listings_df)
 
     sc.stop()
