@@ -117,6 +117,10 @@ def task4(listings):
     print "********************* Task 4b *********************"
     print "Percentage of hosts with more than 1 listings are: ",  float(totalListingMoreThanOne) / float(totalListingPerHost) * 100.0, " %"
 
+def task5(listings):
+    print
+    print "********************* Task 5a *********************"
+    NumberOfNightsBooked = listings.withColumn("reviewsPerMonth", listings["reviewsPerMonth"]/0.7*3*12)
 
 
 if __name__ == "__main__":
@@ -130,8 +134,8 @@ if __name__ == "__main__":
     header = listings_textfile.first() #extract header
     print
     header = header.split()
-    #for x in range(len(header)):
-        #print x, " - ", header[x]
+    for x in range(len(header)):
+        print x, " - ", header[x]
 
     listings_textfile = listings_textfile.filter(lambda row: row != header) #ignores the header
     calendar_textfile = calendar_textfile.filter(lambda row: row != header) #ignores the header
@@ -180,7 +184,7 @@ if __name__ == "__main__":
 
     #task2b(listings, header)
     #task2(listings_df)
-    task3(listings_df)
+    #task3(listings_df)
     #task4(listings_df)
 
     sc.stop()
