@@ -2,7 +2,7 @@ from pyspark import SparkContext
 from pyspark import SQLContext
 from pyspark.sql import Row, SQLContext
 from pyspark.sql.types import DoubleType, IntegerType
-from pyspark.sql.functions import col, lower
+from pyspark.sql.functions import col, lower, desc
 
 
 def task2b(listings, header):
@@ -104,18 +104,18 @@ def task4(listings, list_cal_joined_df):
     print
     print "********************* Task 4a *********************"
     print "Print global average number of listing per host: "
-    listingPerHost = listings.groupBy("hostID").agg({"listingID":"count"}).orderBy("hostID")
-    listingPerHost.show(listingPerHost.count(), truncate = False)
+    #listingPerHost = listings.groupBy("hostID").agg({"listingID":"count"}).orderBy("hostID")
+    #listingPerHost.show(listingPerHost.count(), truncate = False)
 
-    hostsWithOverOneListing = listings.groupBy("hostID").count().where("count(listingID) > 1").orderBy("hostID")
-    #hostsWithOverOneListing.show(hostsWithOverOneListing.count(), truncate = False)
+    #hostsWithOverOneListing = listings.groupBy("hostID").count().where("count(listingID) > 1").orderBy("hostID")
+    ##hostsWithOverOneListing.show(hostsWithOverOneListing.count(), truncate = False)
 
-    totalListingPerHost = listingPerHost.count()
-    totalListingMoreThanOne = hostsWithOverOneListing.count()
+    #totalListingPerHost = listingPerHost.count()
+    #totalListingMoreThanOne = hostsWithOverOneListing.count()
 
     print
     print "********************* Task 4b *********************"
-    print "Percentage of hosts with more than 1 listings are: ",  float(totalListingMoreThanOne) / float(totalListingPerHost) * 100.0, " %"
+    #print "Percentage of hosts with more than 1 listings are: ",  float(totalListingMoreThanOne) / float(totalListingPerHost) * 100.0, " %"
 
     print
     print "********************* Task 4c *********************"
@@ -123,7 +123,17 @@ def task4(listings, list_cal_joined_df):
     #the whole time of the dataset). Calculate the estimated income based
     #on the listing price and number of days it was booked according to
     #the calendar dataset.
-    #join_filtered = list_cal_joined_df.filter(list_cal_joined_df.available == "f") #not finished
+    cities = listings.select(col("cities")).distinct().collect()
+
+    join_filtered = list_cal_joined_df.filter(list_cal_joined_df.available == "f")
+    topThreeHosts = join_filtered.groupBy("cities", "hostID").agg({"price":"sum"})
+    topThreeHosts = topThreeHosts.sort("cities", desc("sum(price)"))
+    topThreeHosts.na.drop()
+
+    for city in cities:
+        print city
+        topThreeHosts.filter(topThreeHosts.cities == city[0]).limit(3).show()
+
 
 def task5(listings):
     print
@@ -142,16 +152,17 @@ if __name__ == "__main__":
     header = listings_textfile.first() #extract header
     calendarHeader = calendar_textfile.first()
 
-    print
-    header = header.split()
-    for x in range(len(header)):
-        print x, " - ", header[x]
 
     #listings_textfile = listings_textfile.filter(lambda row: row != header) #ignores the header
     #calendar_textfile = calendar_textfile.filter(lambda row: row != header) #ignores the header
 
     listings = listings_textfile.filter(lambda row: row != header).map(lambda x: tuple(x.split('\t')))
-    calendar = calendar_textfile.filter(lambda row: row != header).map(lambda x: tuple(x.split('\t')))
+    calendar = calendar_textfile.filter(lambda row: row != calendarHeader).map(lambda x: tuple(x.split('\t')))
+
+    print
+    header = header.split()
+    #for x in range(len(header)):
+        #print x, " - ", header[x]
 
     listings = listings.sample(False, 0.1, 7) # Sample
     calendar = calendar.sample(False, 0.1, 7) # Sample
@@ -175,14 +186,12 @@ if __name__ == "__main__":
         ))
 
 
-
     calendar_df = calendar.map(
         lambda c: Row(
             listingID = c[0],
             date = c[1],
             available = c[2]
         ))
-
 
     listings_df = sqlContext.createDataFrame(listings_df)
     calendar_df = sqlContext.createDataFrame(calendar_df)
@@ -200,8 +209,8 @@ if __name__ == "__main__":
 
 
     #task2b(listings, header)
-    #task2(listings_df)
+    task2(listings_df)
     #task3(listings_df)
-    task4(listings_df, listings_calendar_joined_df)
+    #task4(listings_df, listings_calendar_joined_df)
 
     sc.stop()
