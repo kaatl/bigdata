@@ -139,12 +139,12 @@ def task5(review_listings_joined_df, listings):
     print
     print "********************* Task 5a *********************"
     print "Top 3 guests ranked by their number of bookings: "
-    #city = listings.select(col('cities')).distinct().collect()
-    #review_listings_joined_df.na.drop()
-    #joineddf = review_listings_joined_df.groupBy('cities', 'reviewID').agg({"reviewID":"count"}).sort(desc('count(reviewID)')).cache()
+    city = listings.select(col('cities')).distinct().collect()
+    review_listings_joined_df.na.drop()
+    joineddf = review_listings_joined_df.groupBy('cities', 'reviewID').agg({"reviewID":"count"}).sort(desc('count(reviewID)')).cache()
 
-    #for cities in city:
-        #joineddf.filter(joineddf.cities == cities.cities).limit(3).show()
+    for cities in city:
+        joineddf.filter(joineddf.cities == cities.cities).limit(3).show()
 
 
     print
@@ -153,8 +153,9 @@ def task5(review_listings_joined_df, listings):
     review_listings_joined_df = review_listings_joined_df.filter(review_listings_joined_df.reviewID != "")
     review_listings_joined_df.groupBy('reviewID').agg({'price':'sum'}).sort(desc('sum(price)')).limit(1).show()
 
-def task6():
+def task6(listings):
     #longitude, latitude
+    a = 0
 
 if __name__ == "__main__":
     sc = SparkContext(appName="AirBnb")
@@ -204,7 +205,9 @@ if __name__ == "__main__":
             cities = c[15].lower().strip(),
             countries = c[17].lower().strip(),
             hostID = c[28],
-            listingID = c[43],
+            listingID = int(c[43]),
+            latitude = c[51],
+            longitude = c[54],
             monthly_prices = c[59].replace(',','').replace('$',''),
             price = c[65].replace(',','').replace('$',''),
             reviewsPerMonth = c[80],
@@ -220,7 +223,7 @@ if __name__ == "__main__":
 
     reviews_df = reviews.map(
         lambda c: Row(
-            listingID = c[0],
+            listingID = int(c[0]),
             reviewID = c[3]
         ))
 
@@ -245,6 +248,6 @@ if __name__ == "__main__":
     #task3(listings_df)
     #task4(listings_df, listings_calendar_joined_df)
     #task5(review_listings_joined_df,listings_df)
-    task6()
+    #task6(listings_df)
 
     sc.stop()
