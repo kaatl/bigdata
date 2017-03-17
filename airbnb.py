@@ -139,18 +139,19 @@ def task5(review_listings_joined_df, listings):
     print
     print "********************* Task 5a *********************"
     print "Top 3 guests ranked by their number of bookings: "
-    city = listings.select(col('cities')).distinct().collect()
-    review_listings_joined_df.na.drop()
-    joineddf = review_listings_joined_df.groupBy('cities', 'reviewID').agg({"reviewID":"count"}).sort(desc('count(reviewID)')).cache()
+    #city = listings.select(col('cities')).distinct().collect()
+    #review_listings_joined_df.na.drop()
+    #joineddf = review_listings_joined_df.groupBy('cities', 'reviewID').agg({"reviewID":"count"}).sort(desc('count(reviewID)')).cache()
 
-    for cities in city:
-        joineddf.filter(joineddf.cities == cities.cities).limit(3).show()
+    #for cities in city:
+        #joineddf.filter(joineddf.cities == cities.cities).limit(3).show()
 
 
     print
     print "********************* Task 5b *********************"
     print "The guest who spent the most money on accomodation: "
-
+    review_listings_joined_df = review_listings_joined_df.filter(review_listings_joined_df.reviewID != "")
+    review_listings_joined_df.groupBy('reviewID').agg({'price':'sum'}).sort(desc('sum(price)')).limit(1).show()
 
 
 
