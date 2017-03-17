@@ -2,7 +2,7 @@ from pyspark import SparkContext
 from pyspark import SQLContext
 from pyspark.sql import Row, SQLContext
 from pyspark.sql.types import DoubleType, IntegerType
-from pyspark.sql.functions import col, lower
+from pyspark.sql.functions import col, lower, desc
 
 
 def task2b(listings, header):
@@ -125,10 +125,23 @@ def task4(listings, list_cal_joined_df):
     #the calendar dataset.
     #join_filtered = list_cal_joined_df.filter(list_cal_joined_df.available == "f") #not finished
 
-def task5(listings):
+def task5(review_listings_joined_df, listings):
     print
     print "********************* Task 5a *********************"
-    NumberOfNightsBooked = listings.withColumn("reviewsPerMonth", listings["reviewsPerMonth"]/0.7*3*12)
+    print "Top 3 guests ranked by their number of bookings: "
+    city = listings.select(col('cities')).distinct().collect()
+    review_listings_joined_df.na.drop()
+    joineddf = review_listings_joined_df.groupBy('cities', 'reviewID').agg({"reviewID":"count"}).sort(desc('count(reviewID)')).cache()
+
+    for cities in city:
+        joineddf.filter(joineddf.cities == cities.cities).limit(3).show()
+
+
+    print
+    print "********************* Task 5b *********************"
+    print "The guest who spent the most money on accomodation: "
+
+
 
 
 if __name__ == "__main__":
@@ -138,23 +151,34 @@ if __name__ == "__main__":
     sc.setLogLevel("WARN")
     listings_textfile = sc.textFile("listings_us.csv")
     calendar_textfile = sc.textFile("calendar_us.csv")
+    reviews_textfile = sc.textFile("reviews_us.csv")
 
     header = listings_textfile.first() #extract header
     calendarHeader = calendar_textfile.first()
+    reviewsHeader = reviews_textfile.first()
 
     print
-    header = header.split()
-    for x in range(len(header)):
-        print x, " - ", header[x]
+    #"header = header.split()
+    #"for x in range(len(header)):
+        #"print x, " - ", header[x]
+
+
+    print
+    reviewsHeader  = reviewsHeader.split()
+    for x in range(len(reviewsHeader)):
+        print x, " - ", reviewsHeader[x]
+
 
     #listings_textfile = listings_textfile.filter(lambda row: row != header) #ignores the header
     #calendar_textfile = calendar_textfile.filter(lambda row: row != header) #ignores the header
 
     listings = listings_textfile.filter(lambda row: row != header).map(lambda x: tuple(x.split('\t')))
     calendar = calendar_textfile.filter(lambda row: row != header).map(lambda x: tuple(x.split('\t')))
+    reviews = reviews_textfile.filter(lambda row: row != header).map(lambda x: tuple(x.split('\t')))
 
     listings = listings.sample(False, 0.1, 7) # Sample
     calendar = calendar.sample(False, 0.1, 7) # Sample
+    reviews = reviews.sample(False, 0.1, 7) # Sample
 
 
     # Lagre sample:
@@ -174,8 +198,6 @@ if __name__ == "__main__":
             roomType = c[81]
         ))
 
-
-
     calendar_df = calendar.map(
         lambda c: Row(
             listingID = c[0],
@@ -183,25 +205,35 @@ if __name__ == "__main__":
             available = c[2]
         ))
 
+    reviews_df = reviews.map(
+        lambda c: Row(
+            listingID = c[0],
+            reviewID = c[3]
+        ))
+
 
     listings_df = sqlContext.createDataFrame(listings_df)
     calendar_df = sqlContext.createDataFrame(calendar_df)
+    reviews_df = sqlContext.createDataFrame(reviews_df)
 
     listings_df = listings_df.withColumn('monthly_prices', listings_df['monthly_prices'].cast(DoubleType()))
 
 
     listings_df = listings_df.withColumn('listingID', listings_df['listingID'].cast(IntegerType()))
     calendar_df = calendar_df.withColumn('listingID', calendar_df['listingID'].cast(IntegerType()))
+    reviews_df = reviews_df.withColumn('listingID', reviews_df['listingID'].cast(IntegerType()))
 
-    listings_df.na.drop()
-    calendar_df.na.drop()
+#    listings_df.na.drop()
+#    calendar_df.na.drop()
 
     listings_calendar_joined_df = listings_df.join(calendar_df, 'listingID', "outer")
+    review_listings_joined_df = listings_df.join(reviews_df, 'listingID', "outer")
 
 
     #task2b(listings, header)
     #task2(listings_df)
     #task3(listings_df)
-    task4(listings_df, listings_calendar_joined_df)
+    #task4(listings_df, listings_calendar_joined_df)
+    task5(review_listings_joined_df,listings_df)
 
     sc.stop()
