@@ -104,18 +104,18 @@ def task4(listings, list_cal_joined_df):
     print
     print "********************* Task 4a *********************"
     print "Print global average number of listing per host: "
-    #listingPerHost = listings.groupBy("hostID").agg({"listingID":"count"}).orderBy("hostID")
-    #listingPerHost.show(listingPerHost.count(), truncate = False)
+    listingPerHost = listings.groupBy("hostID").agg({"listingID":"count"}).orderBy("hostID")
+    listingPerHost.show(listingPerHost.count(), truncate = False)
 
-    #hostsWithOverOneListing = listings.groupBy("hostID").count().where("count(listingID) > 1").orderBy("hostID")
-    ##hostsWithOverOneListing.show(hostsWithOverOneListing.count(), truncate = False)
+    hostsWithOverOneListing = listings.groupBy("hostID").count().where("count(listingID) > 1").orderBy("hostID")
+    #hostsWithOverOneListing.show(hostsWithOverOneListing.count(), truncate = False)
 
-    #totalListingPerHost = listingPerHost.count()
-    #totalListingMoreThanOne = hostsWithOverOneListing.count()
+    totalListingPerHost = listingPerHost.count()
+    totalListingMoreThanOne = hostsWithOverOneListing.count()
 
     print
     print "********************* Task 4b *********************"
-    #print "Percentage of hosts with more than 1 listings are: ",  float(totalListingMoreThanOne) / float(totalListingPerHost) * 100.0, " %"
+    print "Percentage of hosts with more than 1 listings are: ",  float(totalListingMoreThanOne) / float(totalListingPerHost) * 100.0, " %"
 
     print
     print "********************* Task 4c *********************"
@@ -153,7 +153,8 @@ def task5(review_listings_joined_df, listings):
     review_listings_joined_df = review_listings_joined_df.filter(review_listings_joined_df.reviewID != "")
     review_listings_joined_df.groupBy('reviewID').agg({'price':'sum'}).sort(desc('sum(price)')).limit(1).show()
 
-
+def task6():
+    #longitude, latitude
 
 if __name__ == "__main__":
     sc = SparkContext(appName="AirBnb")
@@ -234,8 +235,6 @@ if __name__ == "__main__":
     calendar_df = calendar_df.withColumn('listingID', calendar_df['listingID'].cast(IntegerType()))
     reviews_df = reviews_df.withColumn('listingID', reviews_df['listingID'].cast(IntegerType()))
 
-#    listings_df.na.drop()
-#    calendar_df.na.drop()
 
     listings_calendar_joined_df = listings_df.join(calendar_df, 'listingID', "outer")
     review_listings_joined_df = listings_df.join(reviews_df, 'listingID', "outer")
@@ -245,6 +244,7 @@ if __name__ == "__main__":
     #task2(listings_df)
     #task3(listings_df)
     #task4(listings_df, listings_calendar_joined_df)
-    task5(review_listings_joined_df,listings_df)
+    #task5(review_listings_joined_df,listings_df)
+    task6
 
     sc.stop()
