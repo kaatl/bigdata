@@ -1,8 +1,8 @@
 from pyspark import SparkContext
 from pyspark import SQLContext
 from pyspark.sql import Row, SQLContext
-from pyspark.sql.types import DoubleType
-from pyspark.sql.functions import col, lower
+from pyspark.sql.types import DoubleType, IntegerType
+from pyspark.sql.functions import col, lower, explode
 
 
 def task2b(listings, header):
@@ -100,7 +100,7 @@ def task3(listings):
     AmountOfMoney.show(AmountOfMoney.count(), truncate = False)
 
 
-def task4(listings):
+def task4(listings, list_cal_joined_df):
     print
     print "********************* Task 4a *********************"
     print "Print global average number of listing per host: "
@@ -113,10 +113,17 @@ def task4(listings):
     totalListingPerHost = listingPerHost.count()
     totalListingMoreThanOne = hostsWithOverOneListing.count()
 
-
+    print
     print "********************* Task 4b *********************"
     print "Percentage of hosts with more than 1 listings are: ",  float(totalListingMoreThanOne) / float(totalListingPerHost) * 100.0, " %"
 
+    print
+    print "********************* Task 4c *********************"
+    #For each city, find top 3 hosts with the highest income (throughout
+    #the whole time of the dataset). Calculate the estimated income based
+    #on the listing price and number of days it was booked according to
+    #the calendar dataset.
+    #join_filtered = list_cal_joined_df.filter(list_cal_joined_df.available == "f") #not finished
 
 
 if __name__ == "__main__":
@@ -128,16 +135,18 @@ if __name__ == "__main__":
     calendar_textfile = sc.textFile("calendar_us.csv")
 
     header = listings_textfile.first() #extract header
+    calendarHeader = calendar_textfile.first()
+
     print
     header = header.split()
     #for x in range(len(header)):
         #print x, " - ", header[x]
 
-    listings_textfile = listings_textfile.filter(lambda row: row != header) #ignores the header
-    calendar_textfile = calendar_textfile.filter(lambda row: row != header) #ignores the header
+    #listings_textfile = listings_textfile.filter(lambda row: row != header) #ignores the header
+    #calendar_textfile = calendar_textfile.filter(lambda row: row != header) #ignores the header
 
-    listings = listings_textfile.map(lambda x: tuple(x.split('\t')))
-    calendar = calendar_textfile.map(lambda x: tuple(x.split('\t')))
+    listings = listings_textfile.filter(lambda row: row != header).map(lambda x: tuple(x.split('\t')))
+    calendar = calendar_textfile.filter(lambda row: row != header).map(lambda x: tuple(x.split('\t')))
 
     listings = listings.sample(False, 0.1, 7) # Sample
     calendar = calendar.sample(False, 0.1, 7) # Sample
@@ -153,12 +162,11 @@ if __name__ == "__main__":
             cities = c[15].lower().strip(),
             countries = c[17].lower().strip(),
             hostID = c[28],
-            listingID = [43],
+            listingID = c[43],
             monthly_prices = c[59].replace(',','').replace('$',''),
             price = c[65].replace(',','').replace('$',''),
             reviewsPerMonth = c[80],
-            roomType = c[81],
-            accomodation = c[1]
+            roomType = c[81]
         ))
 
 
@@ -177,10 +185,18 @@ if __name__ == "__main__":
     listings_df = listings_df.withColumn('monthly_prices', listings_df['monthly_prices'].cast(DoubleType()))
 
 
+    listings_df = listings_df.withColumn('listingID', listings_df['listingID'].cast(IntegerType()))
+    calendar_df = calendar_df.withColumn('listingID', calendar_df['listingID'].cast(IntegerType()))
+
+    listings_df.na.drop()
+    calendar_df.na.drop()
+
+    listings_calendar_joined_df = listings_df.join(calendar_df, 'listingID', "outer")
+
 
     #task2b(listings, header)
     #task2(listings_df)
-    task3(listings_df)
-    #task4(listings_df)
+    #task3(listings_df)
+    task4(listings_df, listings_calendar_joined_df)
 
     sc.stop()
