@@ -2,7 +2,7 @@ from pyspark import SparkContext
 from pyspark import SQLContext
 from pyspark.sql import Row, SQLContext
 from pyspark.sql.types import DoubleType, IntegerType
-from pyspark.sql.functions import col, lower, explode
+from pyspark.sql.functions import col, lower
 
 
 def task2b(listings, header):
@@ -125,6 +125,11 @@ def task4(listings, list_cal_joined_df):
     #the calendar dataset.
     #join_filtered = list_cal_joined_df.filter(list_cal_joined_df.available == "f") #not finished
 
+def task5(listings):
+    print
+    print "********************* Task 5a *********************"
+    NumberOfNightsBooked = listings.withColumn("reviewsPerMonth", listings["reviewsPerMonth"]/0.7*3*12)
+
 
 if __name__ == "__main__":
     sc = SparkContext(appName="AirBnb")
@@ -139,8 +144,8 @@ if __name__ == "__main__":
 
     print
     header = header.split()
-    #for x in range(len(header)):
-        #print x, " - ", header[x]
+    for x in range(len(header)):
+        print x, " - ", header[x]
 
     #listings_textfile = listings_textfile.filter(lambda row: row != header) #ignores the header
     #calendar_textfile = calendar_textfile.filter(lambda row: row != header) #ignores the header
