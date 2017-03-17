@@ -245,6 +245,6 @@ if __name__ == "__main__":
     #task3(listings_df)
     #task4(listings_df, listings_calendar_joined_df)
     #task5(review_listings_joined_df,listings_df)
-    task6
+    task6()
 
     sc.stop()
