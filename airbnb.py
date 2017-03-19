@@ -63,17 +63,21 @@ def task3(listings):
     print "For each city, the average booking price per night is: "
     cityAvgPrice = listings.groupBy("cities").agg({"price":"avg"}).orderBy("cities")
     cityAvgPrice.show(cityAvgPrice.count(), truncate = False)
+    #cityAvgPrice.coalesce(1).write.format("com.databricks.spark.csv").option("header", "true").save("task3a.csv")
+
 
     print
     print '********************* Task 3b *********************'
     print "Average booking price per room type per night: "
     roomType = listings.groupBy("roomType","cities").agg({"price":"avg"}).orderBy("cities")
     roomType.show(roomType.count(), truncate = False)
+    #roomType.coalesce(1).write.format("com.databricks.spark.csv").option("header", "true").save("task3b.csv")
 
     print
     print "********************* Task 3c *********************"
     reviewsMonthAvg = listings.groupBy("cities").agg({"reviewsPerMonth":"avg"}).orderBy("cities")
     reviewsMonthAvg.show(reviewsMonthAvg.count(), truncate = False)
+    reviewsMonthAvg.coalesce(1).write.format("com.databricks.spark.csv").option("header", "true").save("task3c.csv")
 
     print
     print "********************* Task 3d *********************"
@@ -86,6 +90,7 @@ def task3(listings):
     NumberOfNightsBooked = listings.withColumn("reviewsPerMonth", listings["reviewsPerMonth"]/0.7*3*12)
     NumberOfNights = NumberOfNightsBooked.groupBy("cities").agg({"reviewsPerMonth":"sum"}).orderBy("cities")
     NumberOfNights.show(NumberOfNights.count(), truncate = False)
+    NumberOfNights.coalesce(1).write.format("com.databricks.spark.csv").option("header", "true").save("task3d.csv")
 
     #listings = listings.withColumn("reviewsPerMonth", listings["reviewsPerMonth"]*3 + (listings["reviewsPerMonth"]*3 / 70) * 30)
     #reviewsMonthTotal = listings.groupBy("cities").agg({"reviewsPerMonth":"sum"}).orderBy("cities")
@@ -98,6 +103,7 @@ def task3(listings):
     NumberOfNightsBooked = listings.withColumn("reviewsPerMonth", listings["reviewsPerMonth"]/0.7*3*12 + (listings["price"]*12))
     AmountOfMoney = NumberOfNightsBooked.groupBy("cities").agg({"reviewsPerMonth":"sum"}).orderBy("cities")
     AmountOfMoney.show(AmountOfMoney.count(), truncate = False)
+    AmountOfMoney.coalesce(1).write.format("com.databricks.spark.csv").option("header", "true").save("task3e.csv")
 
 
 def task4(listings, list_cal_joined_df):
@@ -143,9 +149,13 @@ def task5(review_listings_joined_df, listings):
     review_listings_joined_df.na.drop()
     joineddf = review_listings_joined_df.groupBy('cities', 'reviewID').agg({"reviewID":"count"}).sort(desc('count(reviewID)')).cache()
 
+    dataList = None
     for cities in city:
-        joineddf.filter(joineddf.cities == cities.cities).limit(3).show()
+        data = joineddf.filter(joineddf.cities == cities.cities).limit(3)
+        data.show()
+        data.coalesce(1).write.format('com.databricks.spark.csv').mode('append').option("header", "true").save("task5a.csv")
 
+    #joineddf.coalesce(1).write.format("com.databricks.spark.csv").option("header", "true").save("task5a.csv")
 
     print
     print "********************* Task 5b *********************"
@@ -157,11 +167,13 @@ def task6(listings):
     #longitude, latitude
     a = 0
 
+    #Task 6b must be saved in csv
+
 if __name__ == "__main__":
     sc = SparkContext(appName="AirBnb")
     sqlContext = SQLContext(sc)
 
-    sc.setLogLevel("WARN")
+    sc.setLogLevel("ERROR")
     listings_textfile = sc.textFile("listings_us.csv")
     calendar_textfile = sc.textFile("calendar_us.csv")
     reviews_textfile = sc.textFile("reviews_us.csv")
@@ -170,10 +182,6 @@ if __name__ == "__main__":
     calendarHeader = calendar_textfile.first()
     reviewsHeader = reviews_textfile.first()
 
-
-
-    #listings_textfile = listings_textfile.filter(lambda row: row != header) #ignores the header
-    #calendar_textfile = calendar_textfile.filter(lambda row: row != header) #ignores the header
 
     listings = listings_textfile.filter(lambda row: row != header).map(lambda x: tuple(x.split('\t')))
     calendar = calendar_textfile.filter(lambda row: row != calendarHeader).map(lambda x: tuple(x.split('\t')))
@@ -216,7 +224,7 @@ if __name__ == "__main__":
 
     calendar_df = calendar.map(
         lambda c: Row(
-            listingID = c[0],
+            listingID = int(c[0]),
             date = c[1],
             available = c[2]
         ))
@@ -234,9 +242,6 @@ if __name__ == "__main__":
 
     listings_df = listings_df.withColumn('monthly_prices', listings_df['monthly_prices'].cast(DoubleType()))
 
-    listings_df = listings_df.withColumn('listingID', listings_df['listingID'].cast(IntegerType()))
-    calendar_df = calendar_df.withColumn('listingID', calendar_df['listingID'].cast(IntegerType()))
-    reviews_df = reviews_df.withColumn('listingID', reviews_df['listingID'].cast(IntegerType()))
 
 
     listings_calendar_joined_df = listings_df.join(calendar_df, 'listingID', "outer")
@@ -247,7 +252,7 @@ if __name__ == "__main__":
     #task2(listings_df)
     #task3(listings_df)
     #task4(listings_df, listings_calendar_joined_df)
-    #task5(review_listings_joined_df,listings_df)
+    task5(review_listings_joined_df,listings_df)
     #task6(listings_df)
 
     sc.stop()
