@@ -111,10 +111,10 @@ def task4(listings, list_cal_joined_df):
     print "********************* Task 4a *********************"
     print "Print global average number of listing per host: "
     listingPerHost = listings.groupBy("hostID").agg({"listingID":"count"}).orderBy("hostID")
-    listingPerHost.show(listingPerHost.count(), truncate = False)
+    listingPerHost.agg({"count(listingID)":"avg"}).show()
 
     hostsWithOverOneListing = listings.groupBy("hostID").count().where("count(listingID) > 1").orderBy("hostID")
-    #hostsWithOverOneListing.show(hostsWithOverOneListing.count(), truncate = False)
+
 
     totalListingPerHost = listingPerHost.count()
     totalListingMoreThanOne = hostsWithOverOneListing.count()
@@ -251,8 +251,8 @@ if __name__ == "__main__":
     #task2b(listings, header)
     #task2(listings_df)
     #task3(listings_df)
-    #task4(listings_df, listings_calendar_joined_df)
-    task5(review_listings_joined_df,listings_df)
+    task4(listings_df, listings_calendar_joined_df)
+    #task5(review_listings_joined_df,listings_df)
     #task6(listings_df)
 
     sc.stop()
