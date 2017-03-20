@@ -3,6 +3,7 @@ from pyspark import SQLContext
 from pyspark.sql import Row, SQLContext
 from pyspark.sql.types import DoubleType, IntegerType
 from pyspark.sql.functions import col, lower, desc
+import re
 
 
 def task2b(listings, header):
@@ -164,10 +165,20 @@ def task5(review_listings_joined_df, listings):
     review_listings_joined_df.groupBy('reviewID').agg({'price':'sum'}).sort(desc('sum(price)')).limit(1).show()
 
 def task6(listings):
-    #longitude, latitude
-    a = 0
+    path = "neighbourhoods.geojson"
 
-    #Task 6b must be saved in csv
+    #sqlContext.sql("select distinct neighbourhood from geo").show()
+    neighbourhood = sqlContext.read.json(path)
+    #jsonRDD = sc.wholeTextFiles("neighbourhoods.geojson").map(lambda x: x[1])
+    #js = jsonRDD.map(lambda x: re.sub(r"\s+", "", x, flags=re.UNICODE))
+
+    #geom = sqlContext.jsonRDD(js)
+    #geom.registerTempTable("geo")
+
+    neighbourhood.printSchema()
+    neighbourhood.createOrReplaceTempView("people")
+    names = sqlContext.sql("SELECT features FROM people")
+    names.show()
 
 if __name__ == "__main__":
     sc = SparkContext(appName="AirBnb")
@@ -251,8 +262,8 @@ if __name__ == "__main__":
     #task2b(listings, header)
     #task2(listings_df)
     #task3(listings_df)
-    task4(listings_df, listings_calendar_joined_df)
+    #task4(listings_df, listings_calendar_joined_df)
     #task5(review_listings_joined_df,listings_df)
-    #task6(listings_df)
+    task6(listings_df)
 
     sc.stop()
